@@ -3,6 +3,8 @@ package ru.webrelab.kie.cerealstorage
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
 class CerealStorageImplTest {
 
@@ -27,21 +29,25 @@ class CerealStorageImplTest {
         }
     }
 
-    @Test
-    fun `addCereal adds and creates new container`() {
-        assertEquals(0f, storage.addCereal(Cereal.BUCKWHEAT, 10f), 0.01f)
+    @ParameterizedTest
+    @MethodSource("provideNewCerealsAndAmounts")
+    fun `addCereal adds and creates new container`(
+        cereal: Cereal,
+        amount: Float
+    ) {
+        assertEquals(0f, storage.addCereal(cereal, amount), 0.01f)
     }
 
-    @Test
-    fun `addCereal adds in exist container`() {
-        storage.addCereal(Cereal.BUCKWHEAT, 5f)
-        assertEquals(0f, storage.addCereal(Cereal.BUCKWHEAT, 5f), 0.01f)
-    }
-
-    @Test
-    fun `addCereal adds and returns amount of remaining cereal`() {
-        storage.addCereal(Cereal.BUCKWHEAT, 5f)
-        assertEquals(1f, storage.addCereal(Cereal.BUCKWHEAT, 6f), 0.01f)
+    @ParameterizedTest
+    @MethodSource("provideCerealsAndAmountsForExistedContainers")
+    fun `addCereal adds in exist container and returns amount of remaining cereal`(
+        cereal: Cereal,
+        firstAmount: Float,
+        secondAmount: Float,
+        expectedResult: Float
+    ) {
+        storage.addCereal(cereal, firstAmount)
+        assertEquals(expectedResult, storage.addCereal(cereal, secondAmount), 0.01f)
     }
 
     @Test
@@ -60,16 +66,16 @@ class CerealStorageImplTest {
         }
     }
 
-    @Test
-    fun `getCereal takes amount of cereal out of container`() {
-        storage.addCereal(Cereal.BUCKWHEAT, 10f)
-        assertEquals(6f, storage.getCereal(Cereal.BUCKWHEAT, 6f), 0.01f)
-    }
-
-    @Test
-    fun `getCereal takes all amount of cereal out of container`() {
-        storage.addCereal(Cereal.BUCKWHEAT, 4f)
-        assertEquals(4f, storage.getCereal(Cereal.BUCKWHEAT, 6f), 0.01f)
+    @ParameterizedTest
+    @MethodSource("provideCerealsAndAmountToGet")
+    fun `getCereal takes amount of cereal out of container`(
+        cereal: Cereal,
+        amountToAdd: Float,
+        amountToGet: Float,
+        expectedResult: Float
+    ) {
+        storage.addCereal(cereal, amountToAdd)
+        assertEquals(expectedResult, storage.getCereal(cereal, amountToGet), 0.01f)
     }
 
     @Test
@@ -122,13 +128,42 @@ class CerealStorageImplTest {
     }
 
     @Test
-    fun `toString transforms to text`() {
+    fun `toString transforms to text storage with container`() {
         storage.addCereal(Cereal.BUCKWHEAT, 4f)
         assertEquals("Крупа: Гречка, количество: 4.0", storage.toString())
     }
 
     @Test
-    fun `toString for empty storage`() {
+    fun `toString transforms to text empty storage`() {
         assertEquals("Хранилище не содержит контейнеров", storage.toString())
+    }
+
+    companion object {
+        @JvmStatic
+        fun provideNewCerealsAndAmounts() = listOf(
+            arrayOf(Cereal.BUCKWHEAT, 0f),
+            arrayOf(Cereal.RICE, 0.1f),
+            arrayOf(Cereal.MILLET, 9f),
+            arrayOf(Cereal.PEAS, 9.9f),
+            arrayOf(Cereal.BULGUR, 10f)
+        )
+
+        @JvmStatic
+        fun provideCerealsAndAmountsForExistedContainers() = listOf(
+            arrayOf(Cereal.BUCKWHEAT, 0f, 0f, 0f),
+            arrayOf(Cereal.RICE, 3.5f, 2.0f, 0f),
+            arrayOf(Cereal.MILLET, 5f, 6f, 1f),
+            arrayOf(Cereal.PEAS, 9.1f, 0.9f, 0f),
+            arrayOf(Cereal.BULGUR, 10f, 0.1f, 0.1f)
+        )
+
+        @JvmStatic
+        fun provideCerealsAndAmountToGet() = listOf(
+            arrayOf(Cereal.BUCKWHEAT, 10f, 6f, 6f),
+            arrayOf(Cereal.RICE, 4f, 6f, 4f),
+            arrayOf(Cereal.MILLET, 9.1f, 11f, 9.1f),
+            arrayOf(Cereal.PEAS, 5f, 4f, 4f),
+            arrayOf(Cereal.BULGUR, 0.1f, 0.1f, 0.1f),
+        )
     }
 }
